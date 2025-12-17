@@ -1,16 +1,5 @@
 # Publishing Guide
 
-## Setup (One-time)
-
-1.  Log in to [PyPI](https://pypi.org/).
-2.  Go to **Account Settings** -> **Publishing**.
-3.  Add a **New pending publisher**:
-    *   **Project**: `pdf-image-extractor-mcp`
-    *   **Owner**: `maxrabin`
-    *   **Repo**: `pdf-image-mcp`
-    *   **Workflow**: `release.yml`
-    *   **Environment**: `pypi`
-
 ## Releasing a New Version
 
 1.  **Bump Version**:

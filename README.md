@@ -1,72 +1,82 @@
 # PDF Image Extractor MCP Server
 
-A Model Context Protocol (MCP) server that extracts images from PDF files. This server runs locally on your machine, allowing LLMs to access and analyze images embedded within your local PDF documents.
+A Model Context Protocol (MCP) server that extracts images from PDF files. Run this locally to let LLMs access and analyze images embedded within your local PDF documents.
 
-## Features
+## Quick Start
 
--   **Local File Access**: smart searching for PDFs in your current directory, Downloads, Desktop, or temp folder.
--   **Pagination**: Efficiently handles PDFs with many images by extracting them in batches.
--   **Native Processing**: Uses `PyMuPDF` for high-fidelity extraction.
+You can run this server directly using `uvx` (part of the [uv](https://github.com/astral-sh/uv) toolkit). No manual installation required.
 
-## Installation
+```bash
+uvx pdf-image-extractor-mcp
+```
 
-This server is designed to be run with `uv`.
+## Configuration
 
-1.  **Clone the repository**:
-    ```bash
-    git clone https://github.com/maxrabin/pdf-image-extractor-mcp.git
-    cd pdf-image-extractor-mcp
-    ```
+### Claude Desktop app
 
-2.  **Install dependencies**:
-    ```bash
-    uv sync
-    ```
+To use this with the [Claude Desktop app](https://claude.ai/download), add the following to your `claude_desktop_config.json`:
 
-## Usage & Configuration
-
-This server communicates via `stdio` (standard input/output), meaning it must be run as a local command by your MCP client.
-
-### Claude Desktop Configuration
-
-Edit your `claude_desktop_config.json` (usually located at `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
     "pdf-image-extractor": {
-      "command": "uv",
-      "args": [
-        "run",
-        "--directory",
-        "/ABSOLUTE/PATH/TO/pdf-image-extractor-mcp",
-        "pdf-image-extractor-mcp"
-      ]
+      "command": "uvx",
+      "args": ["pdf-image-extractor-mcp"]
     }
   }
 }
 ```
-*Replace `/ABSOLUTE/PATH/TO/` with the actual path to where you cloned this repository.*
 
-### Cursor Configuration
+### Cursor
+
+To add this to [Cursor](https://cursor.com):
 
 1.  Open Cursor Settings.
-2.  Navigate to **Features** -> **MCP**.
+2.  Go to **Features** -> **MCP**.
 3.  Click **+ Add New MCP Server**.
 4.  Enter the following:
-    *   **Name**: `pdf-image-extractor` (or any name you prefer)
+    *   **Name**: `pdf-image-extractor`
     *   **Type**: `stdio` (or Command)
-    *   **Command**: `uv run --directory /ABSOLUTE/PATH/TO/pdf-image-extractor-mcp pdf-image-extractor-mcp`
+    *   **Command**: `uvx pdf-image-extractor-mcp`
 
-### Testing Locally
+### VS Code
 
-You can verify the server works by running it directly from the command line. It should wait for input without crashing:
+If you are using the [MCP Extension for VS Code](https://marketplace.visualstudio.com/items?itemName=Anthropic.mcp-server) (or a compatible AI extension):
+
+Create or edit `.vscode/mcp.json` in your project root:
+
+```json
+{
+  "mcpServers": {
+    "pdf-image-extractor": {
+      "command": "uvx",
+      "args": ["pdf-image-extractor-mcp"]
+    }
+  }
+}
+```
+
+### Claude Code (CLI)
+
+To add this server to [Claude Code](https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview):
 
 ```bash
-uv run pdf-image-extractor-mcp
+claude mcp add pdf-image-extractor -- uvx pdf-image-extractor-mcp
 ```
-*(You won't see output until you send a valid JSON-RPC message, but it verifies the startup)*
+
+### n8n
+
+To use this with [n8n](https://n8n.io):
+
+**Note**: n8n typically connects to MCP servers via HTTP (SSE), not local commands (`stdio`). To use this server with n8n, you must run it behind a generic SSE adapter.
+
+1.  Install the **n8n-nodes-mcp** community node in your n8n instance.
+2.  Run this server wrapped in an SSE transport (using a tool like `mcp-proxy` or `stdio-to-sse`).
+3.  Configure the n8n MCP Client node to point to your local SSE port (e.g., `http://localhost:3000/sse`).
 
 ## Development
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development instructions.
+If you want to contribute or run from source, please see [CONTRIBUTING.md](CONTRIBUTING.md).
