@@ -1,9 +1,12 @@
 # PDF Image Extractor MCP Server
 
 [![PyPI](https://img.shields.io/pypi/v/pdf-image-extractor-mcp)](https://pypi.org/project/pdf-image-extractor-mcp/)
-![Python](https://img.shields.io/pypi/pyversions/pdf-image-extractor-mcp)
+![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue?logo=python&logoColor=white)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/maxrabin/pdf-image-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/maxrabin/pdf-image-mcp/actions/workflows/ci.yml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+
+[![Add to Cursor](https://cursor.com/deeplink/mcp-install-light.png)](cursor://anysphere.cursor-deeplink/mcp/install?name=pdf-image-extractor-mcp&config=eyJ0eXBlIjogInN0ZGlvIiwgImNvbW1hbmQiOiAidXZ4IiwgImFyZ3MiOiBbInBkZi1pbWFnZS1leHRyYWN0b3ItbWNwIl19)
 
 A Model Context Protocol (MCP) server that extracts images from PDF files. Run this locally to let LLMs access and analyze images embedded within your local PDF documents.
 
