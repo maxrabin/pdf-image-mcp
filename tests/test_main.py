@@ -4,7 +4,7 @@ from typing import Any, cast
 import fitz  # type: ignore
 from mcp.server.fastmcp import Image
 
-from pdf_image_mcp.main import extract_images_logic
+from pdf_image_extractor_mcp.main import extract_images_logic
 
 
 def create_dummy_pdf(path: str) -> None:

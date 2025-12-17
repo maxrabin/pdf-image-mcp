@@ -395,8 +395,8 @@ wheels = [
 
 [[package]]
 name = "pdf-image-extractor-mcp"
-version = "0.1.0"
-source = { virtual = "." }
+version = "0.1.2"
+source = { editable = "." }
 dependencies = [
     { name = "mcp" },
     { name = "pymupdf" },

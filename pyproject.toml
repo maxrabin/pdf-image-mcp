@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.scripts]
-pdf-image-extractor-mcp = "pdf_image_mcp.main:main"
+pdf-image-extractor-mcp = "pdf_image_extractor_mcp.main:main"
 
 [build-system]
 requires = ["hatchling"]
