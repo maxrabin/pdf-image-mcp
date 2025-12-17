@@ -4,10 +4,11 @@ import base64
 import os
 import tempfile
 from dataclasses import dataclass
-from typing import Annotated, Any, cast
+from typing import Any, cast
 
 import fitz  # type: ignore[import-untyped]
 from mcp.server.fastmcp import FastMCP, Image
+from pydantic import Field
 
 # Initialize FastMCP server
 mcp = FastMCP("pdf-image-extractor-mcp")
@@ -155,18 +156,16 @@ def extract_images_logic(
 
 @mcp.tool()
 def extract_pdf_images(
-    pdf_path: Annotated[
-        str,
-        "The exact filename of the uploaded PDF (e.g., 'report.pdf'). "
-        "Do NOT include directory paths.",
-    ],
-    start_index: Annotated[
-        int, "Starting index for pagination (0-based). Default is 0."
-    ] = 0,
-    max_images: Annotated[
-        int,
-        "Maximum number of images to extract. Recommended: 10. Default: 10.",
-    ] = 10,
+    pdf_path: str = Field(
+        description="The exact filename of the uploaded PDF (e.g., 'report.pdf'). Do NOT include directory paths."
+    ),
+    start_index: int = Field(
+        default=0, description="Starting index for pagination (0-based). Default is 0."
+    ),
+    max_images: int = Field(
+        default=10,
+        description="Maximum number of images to extract. Recommended: 10. Default: 10.",
+    ),
 ) -> list[Any]:
     """
     Extract images from a PDF file with pagination.
