@@ -1,8 +1,8 @@
 from pathlib import Path
-from typing import Any, cast
 
 import fitz  # type: ignore
-from mcp.server.fastmcp import Image
+import pytest
+from mcp.types import ImageContent, TextContent
 
 from pdf_image_extractor_mcp.main import extract_images_logic
 
@@ -23,44 +23,36 @@ def create_dummy_pdf(path: str) -> None:
     doc.close()
 
 
-def test_extract_images_success(tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_extract_images_success(tmp_path: Path) -> None:
     # Create a dummy PDF in the temp directory
     pdf_path = tmp_path / "test.pdf"
     create_dummy_pdf(str(pdf_path))
 
     # Run extraction
-    results = extract_images_logic(str(pdf_path))
+    results = await extract_images_logic(str(pdf_path))
 
     # Check results
     assert len(results) >= 2  # Summary + 1 image
-    assert isinstance(results[0], str)
-    assert "Extracted 1 images" in results[0]
+    assert isinstance(results[0], TextContent)
+    assert "Extracted 1 images" in results[0].text
 
-    # Check if the second item is an Image object
+    # Check if the second item is an ImageContent object
     img = results[1]
-    assert isinstance(img, Image)
-
-    # Cast to Any to check attributes that might not be statically defined
-    img_any = cast(Any, img)
-
-    # Check attributes (FastMCP Image vs ImageContent)
-    if hasattr(img_any, "format"):
-        assert img_any.format == "png"
-    elif hasattr(img_any, "mimeType"):
-        assert img_any.mimeType == "image/png"
-
-    # Handle Optional[bytes] for data
-    assert img.data is not None
+    assert isinstance(img, ImageContent)
+    assert img.mimeType == "image/png"
     assert len(img.data) > 0
 
 
-def test_extract_images_file_not_found() -> None:
-    results = extract_images_logic("nonexistent.pdf")
+@pytest.mark.asyncio
+async def test_extract_images_file_not_found() -> None:
+    results = await extract_images_logic("nonexistent.pdf")
     assert len(results) == 1
     assert "Error: PDF file not found" in results[0]
 
 
-def test_extract_images_pagination(tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_extract_images_pagination(tmp_path: Path) -> None:
     # Create a PDF with 2 images (on same or different pages)
     pdf_path = tmp_path / "test_multi.pdf"
     doc = fitz.open()
@@ -78,15 +70,17 @@ def test_extract_images_pagination(tmp_path: Path) -> None:
     doc.close()
 
     # Extract with max_images=1
-    results = extract_images_logic(str(pdf_path), max_images=1)
+    results = await extract_images_logic(str(pdf_path), max_images=1)
 
     # Should get summary + 1 image
     assert len(results) == 2
-    assert "Extracted 1 images" in results[0]
-    assert "IMPORTANT: There are more images" in results[0]
+    assert isinstance(results[0], TextContent)
+    assert "Extracted 1 images" in results[0].text
+    assert "IMPORTANT: There are more images" in results[0].text
 
     # Extract next batch
-    results2 = extract_images_logic(str(pdf_path), start_index=1, max_images=1)
+    results2 = await extract_images_logic(str(pdf_path), start_index=1, max_images=1)
     assert len(results2) == 2
-    assert "Extracted 1 images" in results2[0]
-    assert "All images extracted" in results2[0]
+    assert isinstance(results2[0], TextContent)
+    assert "Extracted 1 images" in results2[0].text
+    assert "All images extracted" in results2[0].text

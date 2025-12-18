@@ -1,5 +1,6 @@
-"""MCP server for extracting images from PDFs using PyMuPDF."""
+"MCP server for extracting images from PDFs using PyMuPDF."
 
+import asyncio
 import base64
 import os
 import tempfile
@@ -7,7 +8,8 @@ from dataclasses import dataclass
 from typing import Any, cast
 
 import fitz  # type: ignore[import-untyped]
-from mcp.server.fastmcp import FastMCP, Image
+from mcp.server.fastmcp import FastMCP
+from mcp.types import ImageContent, TextContent
 from pydantic import Field
 
 # Initialize FastMCP server
@@ -30,16 +32,23 @@ def find_pdf_path(
     pdf_path: str,
 ) -> str | None:
     """
-    Find the actual path of the PDF file by checking multiple locations.
+    Find the actual path of the PDF file.
+    Prioritizes absolute paths but checks common locations if only a
+    filename is provided.
 
     Args:
-        pdf_path: The provided path or filename.
+        pdf_path: The provided absolute path or filename.
 
     Returns:
         The absolute path if found, otherwise None.
     """
+    # If it's already a valid absolute path, use it directly
+    if os.path.isabs(pdf_path) and os.path.exists(pdf_path):
+        return pdf_path
+
+    # Fallback search locations
     possible_paths = [
-        pdf_path,  # Direct path as provided
+        pdf_path,  # Direct path as provided (relative)
         os.path.join(os.getcwd(), pdf_path),  # Current working directory
         os.path.join(os.path.expanduser("~"), "Downloads", pdf_path),  # Downloads
         os.path.join(os.path.expanduser("~"), "Desktop", pdf_path),  # Desktop
@@ -52,13 +61,13 @@ def find_pdf_path(
     return None
 
 
-def extract_images_logic(
+def _extract_images_sync(
     pdf_path: str,
     start_index: int = 0,
     max_images: int = 10,
 ) -> list[Any]:
     """
-    Core logic to extract images from a PDF file.
+    Core logic to extract images from a PDF file (synchronous implementation).
     """
     actual_path = find_pdf_path(pdf_path)
 
@@ -145,21 +154,41 @@ def extract_images_logic(
     else:
         summary += "\n\n✓ **All images extracted.**"
 
-    content.append(summary)
+    content.append(TextContent(type="text", text=summary))
 
     # Add images
     for img_info in paginated_images:
-        content.append(Image(data=base64.b64decode(img_info.base64), format="png"))
+        content.append(
+            ImageContent(
+                type="image",
+                data=img_info.base64,
+                mimeType="image/png",
+            )
+        )
 
     return content
 
 
+async def extract_images_logic(
+    pdf_path: str,
+    start_index: int = 0,
+    max_images: int = 10,
+) -> list[Any]:
+    """
+    Asynchronous wrapper for image extraction logic.
+    """
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(
+        None, _extract_images_sync, pdf_path, start_index, max_images
+    )
+
+
 @mcp.tool()
-def extract_pdf_images(
+async def extract_pdf_images(
     pdf_path: str = Field(
         description=(
-            "The exact filename of the uploaded PDF (e.g., 'report.pdf'). "
-            "Do NOT include directory paths."
+            "The full absolute path to the PDF file on the local file system. "
+            "The agent should provide the complete path to ensure the file is found."
         )
     ),
     start_index: int = Field(
@@ -178,7 +207,7 @@ def extract_pdf_images(
     Works best when extracting small batches of images (e.g., 10) at a time.
     Returns a list of image contents and a summary message.
     """
-    return extract_images_logic(pdf_path, start_index, max_images)
+    return await extract_images_logic(pdf_path, start_index, max_images)
 
 
 def main() -> None:
