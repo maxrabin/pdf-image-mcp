@@ -1,7 +1,8 @@
 import os
 from pathlib import Path
+from typing import Any, cast
 
-import fitz  # type: ignore
+import fitz  # type: ignore[import-untyped]
 import pytest
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
@@ -43,10 +44,10 @@ async def test_mcp_list_tools():
             assert "Extract images from a PDF file" in tool.description
 
             # Verify parameter descriptions are present (the fix we made)
-            properties = tool.inputSchema.get("properties", {})
-            assert "pdf_path" in properties
-            assert "description" in properties["pdf_path"]
-            assert "absolute path" in properties["pdf_path"]["description"]
+            properties = cast(dict[str, Any], tool.inputSchema.get("properties", {}))
+            assert "pdf_full_path" in properties
+            assert "description" in properties["pdf_full_path"]
+            assert "absolute path" in properties["pdf_full_path"]["description"]
 
 
 @pytest.mark.asyncio
@@ -67,8 +68,7 @@ async def test_mcp_call_tool(tmp_path: Path):
 
             # Call the tool
             result = await session.call_tool(
-                "extract_pdf_images",
-                arguments={"pdf_path": str(pdf_path)}
+                "extract_pdf_images", arguments={"pdf_full_path": str(pdf_path)}
             )
 
             # Check structure of the result

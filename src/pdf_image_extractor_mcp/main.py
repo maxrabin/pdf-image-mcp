@@ -62,17 +62,19 @@ def find_pdf_path(
 
 
 def _extract_images_sync(
-    pdf_path: str,
+    pdf_full_path: str,
     start_index: int = 0,
     max_images: int = 10,
 ) -> list[Any]:
     """
     Core logic to extract images from a PDF file (synchronous implementation).
     """
-    actual_path = find_pdf_path(pdf_path)
+    actual_path = find_pdf_path(pdf_full_path)
 
     if not actual_path:
-        return [f"Error: PDF file not found: {pdf_path}"]
+        return [
+            TextContent(type="text", text=f"Error: PDF file not found: {pdf_full_path}")
+        ]
 
     output_dir = tempfile.gettempdir()
     all_images: list[ImageInfo] = []
@@ -81,7 +83,7 @@ def _extract_images_sync(
         # Open the document
         doc = fitz.open(actual_path)
     except Exception as e:
-        return [f"Error opening PDF file: {str(e)}"]
+        return [TextContent(type="text", text=f"Error opening PDF file: {str(e)}")]
 
     try:
         # First pass: collect all images with their page info
@@ -127,7 +129,9 @@ def _extract_images_sync(
                     continue
 
     except Exception as e:
-        return [f"Error processing PDF structure: {str(e)}"]
+        return [
+            TextContent(type="text", text=f"Error processing PDF structure: {str(e)}")
+        ]
     finally:
         if "doc" in locals():
             doc.close()
@@ -170,7 +174,7 @@ def _extract_images_sync(
 
 
 async def extract_images_logic(
-    pdf_path: str,
+    pdf_full_path: str,
     start_index: int = 0,
     max_images: int = 10,
 ) -> list[Any]:
@@ -179,13 +183,13 @@ async def extract_images_logic(
     """
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(
-        None, _extract_images_sync, pdf_path, start_index, max_images
+        None, _extract_images_sync, pdf_full_path, start_index, max_images
     )
 
 
 @mcp.tool()
 async def extract_pdf_images(
-    pdf_path: str = Field(
+    pdf_full_path: str = Field(
         description=(
             "The full absolute path to the PDF file on the local file system. "
             "The agent should provide the complete path to ensure the file is found."
@@ -207,7 +211,7 @@ async def extract_pdf_images(
     Works best when extracting small batches of images (e.g., 10) at a time.
     Returns a list of image contents and a summary message.
     """
-    return await extract_images_logic(pdf_path, start_index, max_images)
+    return await extract_images_logic(pdf_full_path, start_index, max_images)
 
 
 def main() -> None:
