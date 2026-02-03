@@ -2,6 +2,7 @@
 
 import asyncio
 import base64
+import logging
 import os
 import tempfile
 from dataclasses import dataclass
@@ -14,6 +15,7 @@ from pydantic import Field
 
 # Initialize FastMCP server
 mcp = FastMCP("pdf-image-extractor-mcp")
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -83,6 +85,7 @@ def _extract_images_sync(
         # Open the document
         doc = fitz.open(actual_path)
     except Exception as e:
+        logger.exception("Failed to open PDF file: %s", actual_path)
         return [TextContent(type="text", text=f"Error opening PDF file: {str(e)}")]
 
     try:
@@ -123,12 +126,15 @@ def _extract_images_sync(
                             media_type="image/png",
                         )
                     )
-                except Exception as e:
+                except Exception:
                     # Log error for this specific image but continue
-                    print(f"Error extracting image {img_index} on page {page_num}: {e}")
+                    logger.exception(
+                        "Error extracting image %s on page %s", img_index, page_num
+                    )
                     continue
 
     except Exception as e:
+        logger.exception("Error processing PDF structure: %s", actual_path)
         return [
             TextContent(type="text", text=f"Error processing PDF structure: {str(e)}")
         ]
@@ -216,6 +222,11 @@ async def extract_pdf_images(
 
 def main() -> None:
     """Entry point for the MCP server."""
+    if not logging.getLogger().handlers:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s %(levelname)s %(name)s %(message)s",
+        )
     mcp.run()
 
 
